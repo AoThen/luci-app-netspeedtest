@@ -9,16 +9,13 @@ permissions:
 
 jobs:
   build:
-    name: ${{ matrix.arch }}-${{ matrix.branch }} build
+    name: build
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch:
-            - aarch64_cortex-a53
-            # - x86_64
-        branch:
-            - openwrt-21.02
-            # - openwrt-23.05
+        include:
+            - sdk_url: 
+                https://downloads.openwrt.org/releases/21.02.5/targets/x86/64/openwrt-sdk-21.02.5-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz
     steps:
     #   - name: Building packages
     #     uses: actions/checkout@main
@@ -27,12 +24,11 @@ jobs:
 
       - name: Building packages
         run: |
-            wget https://downloads.openwrt.org/releases/21.02.5/targets/x86/64/openwrt-sdk-21.02.5-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+            wget ${{ matrix.sdk_url }}
+            file_name=$(echo ${{ matrix.sdk_url }} | awk -F/ '{print $NF}')
+            mkdir sdk && tar -xJf $file_name -C ./sdk --strip-components=1
+            cd sdk
 
-            tar xjf openwrt-sdk-21.02.5-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz
-            
-            cd OpenWrt-sdk-*-x86_64_*
-            
             git clone --depth 1 --branch master --single-branch --no-checkout https://github.com/muink/luci-app-netspeedtest.git package/luci-app-netspeedtest
             pushd package/luci-app-netspeedtest
             umask 022
@@ -61,7 +57,7 @@ jobs:
       - name: Store packages
         uses: actions/upload-artifact@main
         with:
-          name: Openclash-${{ matrix.arch}}-${{ matrix.branch }}
+          name: ipk
           path: OpenWrt-sdk-*-x86_64_*/buildsource/*.ipk
 
       - name: Delete workflow runs
