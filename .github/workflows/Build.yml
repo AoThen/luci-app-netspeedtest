@@ -40,7 +40,7 @@ jobs:
             
             echo 'CONFIG_ALL=y' >> .config
             make defconfig
-            
+
             make download -j$(nproc)
             
             make package/luci-app-netspeedtest/compile -j$(nproc)
@@ -60,7 +60,7 @@ jobs:
         uses: actions/upload-artifact@main
         with:
           name: ipk
-          path: OpenWrt-sdk-*-x86_64_*/buildsource/*.ipk
+          path: sdk/buildsource/*.ipk
 
       - name: Delete workflow runs
         uses: AoThen/delete-workflow-runs@main
