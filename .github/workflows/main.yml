@@ -1,0 +1,50 @@
+name: Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  build:
+    name: ${{ matrix.arch }}-${{ matrix.branch }} build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch:
+            - aarch64_cortex-a53
+            # - x86_64
+        branch:
+            - openwrt-21.02
+            # - openwrt-23.05
+    steps:
+      - name: Building packages
+        uses: actions/checkout@main
+        with:
+          fetch-depth: 0
+
+      # - name: Building packages
+      #   run: |
+      #       git clone --depth 1 https://github.com/vernesong/OpenClash.git luci-app-openclash2
+      #       mv luci-app-openclash2/luci-app-openclash .
+      #       rm -rf luci-app-openclash2
+
+      - name: Build
+        uses: openwrt/gh-action-sdk@main
+        env:
+          ARCH: ${{ matrix.arch }}-${{ matrix.branch }}
+          FEEDNAME: packages_ci
+          PACKAGES: luci-app-netspeedtest
+
+      - name: Store packages
+        uses: actions/upload-artifact@main
+        with:
+          name: Openclash-${{ matrix.arch}}-${{ matrix.branch }}
+          path: bin/packages/${{ matrix.arch }}/packages_ci/*.ipk
+
+      - name: Delete workflow runs
+        uses: AoThen/delete-workflow-runs@main
+        with:
+          retain_days: 1
+          keep_minimum_runs: 5
