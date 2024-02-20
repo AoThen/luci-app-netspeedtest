@@ -39,9 +39,11 @@ jobs:
             ./scripts/feeds install -a
             
             echo 'CONFIG_ALL=y' >> .config
+            make defconfig
+            
             make download -j$(nproc)
             
-            make package/luci-app-netspeedtest/compile V=99
+            make package/luci-app-netspeedtest/compile -j$(nproc)
 
             mkdir -p ./buildsource
 
