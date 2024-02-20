@@ -1,0 +1,71 @@
+name: Build2
+
+on:
+  workflow_dispatch:
+  push:
+
+permissions:
+  actions: write
+
+jobs:
+  build:
+    name: ${{ matrix.arch }}-${{ matrix.branch }} build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch:
+            - aarch64_cortex-a53
+            # - x86_64
+        branch:
+            - openwrt-21.02
+            # - openwrt-23.05
+    steps:
+    #   - name: Building packages
+    #     uses: actions/checkout@main
+    #     with:
+    #       fetch-depth: 0
+
+      - name: Building packages
+        run: |
+            wget https://downloads.openwrt.org/releases/21.02.5/targets/x86/64/openwrt-sdk-21.02.5-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+
+            tar xjf openwrt-sdk-21.02.5-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+            
+            cd OpenWrt-sdk-*-x86_64_*
+            
+            git clone --depth 1 --branch master --single-branch --no-checkout https://github.com/muink/luci-app-netspeedtest.git package/luci-app-netspeedtest
+            pushd package/luci-app-netspeedtest
+            umask 022
+            git checkout
+            popd
+            
+            ./scripts/feeds update -a
+            ./scripts/feeds install -a
+            
+            echo 'CONFIG_ALL=y' >> .config
+            make download -j$(nproc)
+            
+            make package/luci-app-netspeedtest/compile V=99
+
+            mkdir -p ./buildsource
+
+            find . -name "*.ipk" -exec cp -f {} "./buildsource" \;
+
+    #   - name: Build
+    #     uses: openwrt/gh-action-sdk@main
+    #     env:
+    #       ARCH: ${{ matrix.arch }}-${{ matrix.branch }}
+    #       FEEDNAME: packages_ci
+    #       PACKAGES: luci-app-netspeedtest
+
+      - name: Store packages
+        uses: actions/upload-artifact@main
+        with:
+          name: Openclash-${{ matrix.arch}}-${{ matrix.branch }}
+          path: OpenWrt-sdk-*-x86_64_*/buildsource/*.ipk
+
+      - name: Delete workflow runs
+        uses: AoThen/delete-workflow-runs@main
+        with:
+          retain_days: 1
+          keep_minimum_runs: 5
