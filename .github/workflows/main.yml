@@ -14,11 +14,11 @@ jobs:
     strategy:
       matrix:
         arch:
-            - aarch64_cortex-a53
-            # - x86_64
+            - x86_64
+            # - aarch64_cortex-a53
         branch:
-            - openwrt-21.02
             - openwrt-23.05
+            # - openwrt-21.02
     steps:
       - name: Building packages
         uses: actions/checkout@main
